@@ -2,8 +2,9 @@ FROM debian:bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV MISE_YES=1
-ENV MISE_DATA_DIR=/home/opencode/.local/share/mise
-ENV MISE_CONFIG_DIR=/home/opencode/.config/mise
+ENV HOME=/var/lib/opencode
+ENV MISE_DATA_DIR=/opt/mise
+ENV PATH="/opt/mise/shims:/usr/local/bin:${PATH}"
 
 # System dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -28,40 +29,40 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xdg-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Entrypoint (copy while still root)
+# Entrypoint
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
-# Non-root user
-RUN useradd -m -s /bin/bash opencode
-USER opencode
-WORKDIR /home/opencode
+# Install mise outside the user home so Railway volumes do not hide it
+RUN curl https://mise.run | sh && \
+    install -m 0755 "$HOME/.local/bin/mise" /usr/local/bin/mise && \
+    useradd -m -d "$HOME" -s /bin/bash opencode && \
+    mkdir -p "$MISE_DATA_DIR" /workspace && \
+    chown -R opencode:opencode "$HOME" "$MISE_DATA_DIR" /workspace && \
+    chmod 0755 /usr/local/bin/entrypoint.sh
 
-# Install mise
-RUN curl https://mise.run | sh
-ENV PATH="/home/opencode/.local/bin:${PATH}"
+USER opencode
+WORKDIR /workspace
 SHELL ["/bin/bash", "-c"]
 
 # Copy tool config and install runtimes
 COPY --chown=opencode:opencode .mise.toml .mise.toml
-RUN mise install && mise reshim
-
-# Install opencode and agent-browser via npm
-# agent-browser uses system chromium (set via CHROME_PATH), no need for agent-browser install
-RUN eval "$(mise activate bash)" && \
-    npm install -g opencode-ai agent-browser
+RUN mise install && \
+    mise reshim && \
+    npm install -g opencode-ai agent-browser && \
+    mise reshim
 
 # Copy custom skills source
 COPY --chown=opencode:opencode skills/ skills/
 
 # Install all skills (opencode agent only)
-RUN eval "$(mise activate bash)" && \
-    npx skills add railwayapp/railway-skills -a opencode -y && \
-    npx skills add ./skills -a opencode -y
-RUN rm -rf skills/ skills-lock.json
+RUN npx skills add railwayapp/railway-skills -a opencode -y && \
+    npx skills add ./skills -a opencode -y && \
+    rm -rf skills/ skills-lock.json && \
+    cp -a "$HOME/.agents" /opt/skills-seed
 
 ENV CHROME_PATH=/usr/bin/chromium
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV CHROMIUM_PATH=/usr/bin/chromium
 
 EXPOSE 4096
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
