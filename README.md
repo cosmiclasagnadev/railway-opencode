@@ -2,7 +2,7 @@
 
 A one-click Railway template that runs an [OpenCode](https://opencode.ai) server with pre-configured skills and tools.
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/h26SmG?referralCode=NhCCIt&utm_medium=integration&utm_source=template&utm_campaign=generic)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/opencode-for-railway?referralCode=NhCCIt&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 ## What's included
 
