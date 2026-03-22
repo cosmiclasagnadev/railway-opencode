@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-[[ ! -d /workspace/.agents ]] && cp -a /opt/skills-seed /workspace/.agents
+[[ ! -d /workspace/.mise ]] && cp -a /opt/seed/.mise /workspace/.mise
+[[ ! -d /workspace/.agents ]] && cp -a /opt/seed/.agents /workspace/.agents
 
 eval "$(mise activate bash)"
 
