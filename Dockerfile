@@ -47,7 +47,7 @@ RUN echo 'eval "$(mise activate bash)"' >> $HOME/.bashrc
 COPY --chown=opencode:opencode .mise.toml $MISE_GLOBAL_CONFIG_FILE
 RUN mise install && \
     mise reshim && \
-    npm install -g opencode-ai agent-browser && \
+    npm install -g opencode-ai@latest agent-browser && \
     mise reshim
 
 COPY --chown=opencode:opencode skills/ /tmp/skills/
